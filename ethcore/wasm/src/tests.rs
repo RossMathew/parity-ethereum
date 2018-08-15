@@ -815,8 +815,7 @@ fn externs() {
 	assert_eq!(gas_left, U256::from(90_429));
 }
 
-// This test checks the ability of wasm contract to invoke
-// varios blockchain runtime methods
+// This test checks the ability of wasm contract to invoke gasleft
 #[test]
 fn gasleft() {
 	::ethcore_logger::init_log();
@@ -838,6 +837,23 @@ fn gasleft() {
 			assert_eq!(gas, 93_420);
 			assert_eq!(gas_left, U256::from(93_343));
 		},
+	}
+}
+
+// This test should fail because
+// ext.schedule.wasm.as_mut().unwrap().have_gasleft = false;
+#[test]
+fn gasleft_panic() {
+	::ethcore_logger::init_log();
+
+	let mut params = ActionParams::default();
+	params.gas = U256::from(100_000);
+	params.code = Some(Arc::new(load_sample!("gasleft.wasm")));
+	let mut ext = FakeExt::new().with_wasm();
+	let mut interpreter = wasm_interpreter(params);
+	match interpreter.exec(&mut ext) {
+		Err(..) => {},
+		Ok(..) => panic!("interpreter.exec should return Err if ext.schedule.wasm.have_gasleft = false")
 	}
 }
 
